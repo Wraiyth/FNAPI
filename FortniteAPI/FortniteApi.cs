@@ -9,7 +9,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using Every;
-
+using FNAPI.Endpoints.Challenges;
+using FNAPI.Endpoints.Interfaces;
+using FNAPI.Interfaces;
 using FortniteAPI.Enums;
 using FortniteAPI.Classes;
 using FortniteAPI.Classes.Items;
@@ -34,7 +36,7 @@ namespace FortniteAPI
         public async Task<FNNews> GetNewsAsync()
         {
             var request = new RestRequest("br_motd/get", Method.POST);
-            IRestResponse response = await FNAPI.SendRestRequestAsync(request).ConfigureAwait(false);
+            IRestResponse response = await FortniteApi.SendRestRequestAsync(request).ConfigureAwait(false);
             if (response.ResponseStatus != ResponseStatus.Completed)
             {
                 return null;
@@ -48,7 +50,7 @@ namespace FortniteAPI
             var request = new RestRequest("challenges/get", Method.POST);
             request.AddParameter("language", "en");
             request.AddParameter("season", season.ToString().ToLower());
-            IRestResponse response = await FNAPI.SendRestRequestAsync(request).ConfigureAwait(false);
+            IRestResponse response = await FortniteApi.SendRestRequestAsync(request).ConfigureAwait(false);
             if (response.ResponseStatus != ResponseStatus.Completed)
             {
                 return null;
@@ -61,7 +63,7 @@ namespace FortniteAPI
         {
             var request = new RestRequest("store/get", Method.POST);
             request.AddParameter("language", "en");
-            IRestResponse response = await FNAPI.SendRestRequestAsync(request).ConfigureAwait(false);
+            IRestResponse response = await FortniteApi.SendRestRequestAsync(request).ConfigureAwait(false);
             if (response.ResponseStatus != ResponseStatus.Completed)
             {
                 return null;
@@ -74,7 +76,7 @@ namespace FortniteAPI
         {
             var request = new RestRequest("leaderboards/get", Method.POST);
             request.AddParameter("window", type.ToString().ToLower());
-            IRestResponse response = await FNAPI.SendRestRequestAsync(request).ConfigureAwait(false);
+            IRestResponse response = await FortniteApi.SendRestRequestAsync(request).ConfigureAwait(false);
             if (response.ResponseStatus != ResponseStatus.Completed)
             {
                 return null;
@@ -87,7 +89,7 @@ namespace FortniteAPI
         {
             var request = new RestRequest("item/get", Method.POST);
             request.AddParameter("ids", UID.GetUID());
-            IRestResponse response = await FNAPI.SendRestRequestAsync(request).ConfigureAwait(false);
+            IRestResponse response = await FortniteApi.SendRestRequestAsync(request).ConfigureAwait(false);
             if (response.ResponseStatus != ResponseStatus.Completed)
             {
                 return null;
@@ -102,7 +104,7 @@ namespace FortniteAPI
         public async Task<FNNews> GetNewsAsync()
         {
             var request = new RestRequest("stw_motd/get", Method.POST);
-            IRestResponse response = await FNAPI.SendRestRequestAsync(request).ConfigureAwait(false);
+            IRestResponse response = await FortniteApi.SendRestRequestAsync(request).ConfigureAwait(false);
             if (response.ResponseStatus != ResponseStatus.Completed)
             {
                 return null;
@@ -112,27 +114,37 @@ namespace FortniteAPI
         }
     }
     
-    public class FNAPI
+    public class FortniteApi : IFortniteApi
     {
-        public static string APIKey;
+        public static string ApiKey;
+
         public BRManager BR = new BRManager();
         public STWManager STW = new STWManager();
 
-        private static WebClient webClient = new WebClient();
-        private static RestClient restClient = new RestClient("https://fortnite-public-api.theapinetwork.com/prod09/");
+        private static readonly WebClient webClient = new WebClient();
+        private static readonly RestClient restClient = new RestClient("https://fortnite-public-api.theapinetwork.com/prod09/");
 
-        public FNAPI(string _APIKey)
+        public IChallengeEndpoint Challenges { get; }
+
+        public FortniteApi(string apiKey)
         {
-            APIKey = _APIKey;
+            ApiKey = apiKey;
+
+            Challenges = new ChallengeEndpoint();
+        }
+
+        /*public FortniteApi(string _APIKey)
+        {
+            _apiKey = _APIKey;
         }
 
         //Use custom BaseURL
-        public FNAPI(string _APIKey, string _BaseURL)
+        public FortniteApi(string _APIKey, string _BaseURL)
         {
-            APIKey = _APIKey;
+            _apiKey = _APIKey;
             restClient.BaseUrl = new Uri(_BaseURL);
-        }
-        
+        }*/
+
         public FNWeek GetCurrentWeek()
         {
             var status = BR.GetChallengesAsync().Result;
@@ -207,14 +219,14 @@ namespace FortniteAPI
             return (T)Activator.CreateInstance(typeof(T), new object[] { userID });
         }
 
-        internal static async Task<string> SendWebRequestAsync(string request)
+        internal async Task<string> SendWebRequestAsync(string request)
         {
             return await webClient.DownloadStringTaskAsync(request).ConfigureAwait(false);
         }
 
         internal static async Task<IRestResponse> SendRestRequestAsync(RestRequest request)
         {
-            request.AddHeader("Authorization", APIKey);
+            request.AddHeader("Authorization", ApiKey);
             return await restClient.ExecuteTaskAsync(request).ConfigureAwait(false);
         }
     }

@@ -11,11 +11,14 @@ namespace ExampleTest
         static void Main(string[] args)
         => new Program().MainAsync().GetAwaiter().GetResult();
 
-        public static FNAPI APi = new FNAPI("VALID API KEY HERE");
+        public static FortniteApi APi = new FortniteApi("VALID API KEY HERE");
 
         public async Task MainAsync()
         {
-            APi.BR.StoreUpdated += StoreUpdated;
+            //APi.BR.StoreUpdated += StoreUpdated;
+
+            // New way to retrieve Challenge Details
+            var challengeDetails = await APi.Challenges.GetChallengeDetailsAsync();
 
             var season = APi.GetCurrentSeason();
             var week = APi.GetCurrentWeek();
